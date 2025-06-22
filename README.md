@@ -174,7 +174,7 @@ This SQL statement creates a trigger named `on_auth_user_created` that executes 
       user_id uuid not null,
       created_at timestamp with time zone not null default current_timestamp,
       updated_at timestamp with time zone not null default current_timestamp,
-      chat_title null,
+      chat_title text null,
       constraint chat_sessions_pkey primary key (id),
       constraint chat_sessions_user_id_fkey foreign key (user_id) references users (id)
     ) tablespace pg_default;
@@ -182,6 +182,9 @@ This SQL statement creates a trigger named `on_auth_user_created` that executes 
   create index if not exists idx_chat_sessions_user_id on public.chat_sessions using btree (user_id) tablespace pg_default;
 
   create index if not exists chat_sessions_created_at_idx on public.chat_sessions using btree (created_at) tablespace pg_default;
+
+  -- Enable RLS for chat_sessions
+  alter table public.chat_sessions enable row level security;
 
   -- Chat Messages Table
   create table
@@ -192,7 +195,7 @@ This SQL statement creates a trigger named `on_auth_user_created` that executes 
       is_user_message boolean not null,
       sources jsonb null,
       attachments jsonb null,
-      tool_invocations null,
+      tool_invocations jsonb null,
       created_at timestamp with time zone not null default current_timestamp,
       constraint chat_messages_pkey primary key (id),
       constraint chat_messages_chat_session_id_fkey foreign key (chat_session_id) references chat_sessions (id) on delete cascade
@@ -226,7 +229,7 @@ CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
 When dealing with hundreds of thousands of document vectors, optimizing for both storage and retrieval speed is critical. Our system has been configured using the following best practices:
 
 
--- Create the vector_documents table
+-- Create the user_documents table (main document metadata)
 CREATE TABLE public.user_documents (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -314,35 +317,6 @@ These optimizations enable sub-second query times even with hundreds of thousand
 
 Above 500k rows you should consider increasing m and ef_construction to m = '32' and ef_construction = '128'
 
--- Enable RLS
-ALTER TABLE public.vector_documents ENABLE ROW LEVEL SECURITY;
-
--- Optimized RLS Policies for vector_documents
-CREATE POLICY "Users can only read their own documents"
-ON public.vector_documents
-FOR SELECT
-TO authenticated
-USING (user_id = (SELECT auth.uid()));
-
--- Users Table RLS Policies
-CREATE POLICY "Users can insert own data"
-ON public.users
-FOR INSERT
-TO public
-WITH CHECK (id = (SELECT auth.uid()));
-
-CREATE POLICY "Users can update own data"
-ON public.users
-FOR UPDATE
-TO public
-USING (id = (SELECT auth.uid()))
-WITH CHECK (id = (SELECT auth.uid()));
-
-CREATE POLICY "Users can view own data"
-ON public.users
-FOR SELECT
-TO public
-USING (id = (SELECT auth.uid()));
 
 -- Chat Sessions RLS Policies
 CREATE POLICY "Users can view own chat sessions"
@@ -352,19 +326,6 @@ FOR ALL
 TO public
 USING (user_id = (SELECT auth.uid()));
 
--- Chat Messages RLS Policies
-CREATE POLICY "Users can view messages from their sessions"
-ON public.chat_messages
-AS PERMISSIVE
-FOR ALL
-TO public
-USING (
-  chat_session_id IN (
-      SELECT chat_sessions.id
-      FROM chat_sessions
-      WHERE chat_sessions.user_id = (SELECT auth.uid())
-  )
-);
 
 -- Create the similarity search function
 CREATE OR REPLACE FUNCTION match_documents(
