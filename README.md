@@ -100,25 +100,25 @@ create table users (
 -- Enable Row Level Security (RLS)
 alter table public.users enable row level security;
 
--- Create RLS policies for users table
+-- Create RLS policies for users table (performance optimized)
 create policy "Users can insert own data"
 on public.users
 for insert
 to public
-with check (id = auth.uid());
+with check (id = (SELECT auth.uid()));
 
 create policy "Users can update own data"
 on public.users
 for update
 to public
-using (id = auth.uid())
-with check (id = auth.uid());
+using (id = (SELECT auth.uid()))
+with check (id = (SELECT auth.uid()));
 
 create policy "Users can view own data"
 on public.users
 for select
 to public
-using (id = auth.uid());
+using (id = (SELECT auth.uid()));
 ```
 
 This SQL statement creates a `users` table with columns for storing user data such as `id`, `full_name` and `email`. The `id` column is a foreign key referencing the `auth.users` table. It also enables RLS for the users table allowing users to read, insert and update their own data
@@ -127,7 +127,11 @@ This SQL statement creates a `users` table with columns for storing user data su
 
    ```sql
    create function public.handle_new_user()
-   returns trigger as $$
+   returns trigger 
+   language plpgsql 
+   security definer
+   set search_path = ''
+   as $$
    begin
     insert into public.users (id, full_name, email)
     values (
@@ -137,7 +141,7 @@ This SQL statement creates a `users` table with columns for storing user data su
     );
     return new;
    end;
-   $$ language plpgsql security definer;
+   $$;
    ```
 
 This SQL function is a trigger function that automatically inserts a new user entry into the `public.users` table when a new user signs up via Supabase Auth. It extracts the `id`, `full_name` and `email` from the `auth.users` table and inserts them into the corresponding columns in the `public.users` table.
@@ -205,7 +209,7 @@ This SQL statement creates a trigger named `on_auth_user_created` that executes 
   -- Enable RLS for chat_messages
   alter table public.chat_messages enable row level security;
 
-  -- Chat messages RLS policy
+  -- Chat messages RLS policy (performance optimized)
   create policy "Users can view messages from their sessions"
   on public.chat_messages
   as permissive
@@ -215,7 +219,7 @@ This SQL statement creates a trigger named `on_auth_user_created` that executes 
     chat_session_id IN (
       SELECT chat_sessions.id
       FROM chat_sessions
-      WHERE chat_sessions.user_id = auth.uid()
+      WHERE chat_sessions.user_id = (SELECT auth.uid())
     )
   );
 
@@ -350,6 +354,7 @@ RETURNS TABLE (
   similarity float
 )
 LANGUAGE plpgsql
+SET search_path = ''
 AS $$
 BEGIN
   RETURN QUERY
@@ -367,9 +372,9 @@ BEGIN
     doc.total_pages,
     1 - (vec.embedding <=> query_embedding) as similarity
   FROM
-    user_documents_vec vec
+    public.user_documents_vec vec
   INNER JOIN
-    user_documents doc ON vec.document_id = doc.id
+    public.user_documents doc ON vec.document_id = doc.id
   WHERE
     doc.user_id = filter_user_id
     AND doc.filter_tags = ANY(filter_files)
