@@ -114,9 +114,9 @@ FilePreview.displayName = 'FilePreview';
 const getModelTypes = (flags: any) => {
   const types = [];
   
-  if (flags.standardSearch) {
-    types.push({ value: 'standart', label: 'Standard' });
-  }
+  // Standard search is always available (core functionality)
+  types.push({ value: 'standart', label: 'Standard' });
+  
   if (flags.perplexitySearch) {
     types.push({ value: 'perplex', label: 'Perplexity' });
   }
@@ -127,11 +127,7 @@ const getModelTypes = (flags: any) => {
     types.push({ value: 'arabic-legal', label: 'Arabic Legal' });
   }
   
-  // Return types if any are enabled, otherwise default
-  return types.length > 0 ? types : [
-    { value: 'standart', label: 'Standard' },
-    { value: 'perplex', label: 'Perplexity' }
-  ];
+  return types;
 };
 
 const MessageInput = ({

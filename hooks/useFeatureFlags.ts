@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import posthog from 'posthog-js'
 
 export interface FeatureFlags {
-  standardSearch: boolean
   perplexitySearch: boolean
   websiteSearch: boolean
   arabicLegalSearch: boolean
@@ -14,7 +13,6 @@ export interface FeatureFlags {
 
 export const useFeatureFlags = (): FeatureFlags => {
   const [flags, setFlags] = useState<FeatureFlags>({
-    standardSearch: true, // Default values
     perplexitySearch: true,
     websiteSearch: false,
     arabicLegalSearch: false,
@@ -27,7 +25,6 @@ export const useFeatureFlags = (): FeatureFlags => {
 
     const updateFlags = () => {
       setFlags({
-        standardSearch: posthog.isFeatureEnabled('standard-search') ?? true,
         perplexitySearch: posthog.isFeatureEnabled('perplexity-search') ?? true,
         websiteSearch: posthog.isFeatureEnabled('website-search') ?? false,
         arabicLegalSearch: posthog.isFeatureEnabled('arabic-legal-search') ?? false,
