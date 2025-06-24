@@ -20,7 +20,6 @@ import MemoizedMarkdown from './tools/MemoizedMarkdown';
 import ReasoningContent from './tools/Reasoning';
 import SourceView from './tools/SourceView';
 import DocumentSearchTool from './tools/DocumentChatTool';
-import WebsiteSearchTool from './tools/WebsiteChatTool';
 import MessageInput from './ChatMessageInput';
 import { toast } from 'sonner';
 
@@ -73,7 +72,9 @@ const ChatComponent: React.FC<ChatProps> = ({
       case 'perplex':
         return '/api/perplexity';
       case 'website':
-        return '/api/websitechat';
+        return '/api/websitechat'; // Admin-controlled feature
+      case 'arabic-legal':
+        return '/api/arabic-legal-search'; // Future endpoint
       default:
         return '/api/chat';
     }
@@ -310,13 +311,6 @@ const ChatComponent: React.FC<ChatProps> = ({
                                     case 'searchUserDocument':
                                       return (
                                         <DocumentSearchTool
-                                          key={toolId}
-                                          toolInvocation={part.toolInvocation}
-                                        />
-                                      );
-                                    case 'websiteSearchTool':
-                                      return (
-                                        <WebsiteSearchTool
                                           key={toolId}
                                           toolInvocation={part.toolInvocation}
                                         />

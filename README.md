@@ -1,4 +1,4 @@
-# Supabase Auth with SSR + RAG + Tavily AI Web Search 🔍
+# Supabase Auth with SSR + RAG 🔍
 
 ## Project Showcase
 
@@ -57,11 +57,11 @@ You can find the videos located inside the public folder!
 
 - A Llarma Cloud account [LlamaCloud](https://cloud.llamaindex.ai/) (for parsing pdf files into markdown)
 - An Upstash redis account [Upstash](https://upstash.com/) (for ratelimiting and caching)
-- A Tavily account for searching the internet using the AI [Tavily](https://tavily.com/)
 - A Openai API key [OpenaiAPI](https://platform.openai.com/docs/overview)
 - A Anthripic API key [Antropic](https://console.anthropic.com/dashboard)
 - A perplexity API key [Perplexity](https://docs.perplexity.ai/home)
 - A Langfuse API key [Langfuse](https://cloud.langfuse.com/) (for telemetry for the AI chat, https://sdk.vercel.ai/providers/observability/langfuse)
+- A PostHog account [PostHog](https://posthog.com/) (for feature flags and analytics)
 
 ### Installation
 
@@ -478,7 +478,6 @@ Configure your environment by renaming `.env.local.example` to `.env.local` and 
 
 Optional variables for extended functionality:
 
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
 - `NEXT_PUBLIC_CLIENT_ID`
 - `CLIENT_SECRET`
@@ -496,6 +495,11 @@ For Openai, Perplexity and Upstash/Redis
 - `OPENAI_API_KEY=`
 - `UPSTASH_REDIS_REST_URL=`
 - `UPSTASH_REDIS_REST_TOKEN=`
+
+**PostHog (Feature Flags & Analytics):**
+
+- `NEXT_PUBLIC_POSTHOG_KEY`: Your PostHog project API key
+- `NEXT_PUBLIC_POSTHOG_HOST`: PostHog host URL (default: https://eu.i.posthog.com)
 
 ## 📧 Email Templates
 

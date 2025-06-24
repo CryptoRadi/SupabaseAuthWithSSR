@@ -6,6 +6,7 @@ import { getSession } from '@/lib/server/supabase';
 import NavBar from '@/app/components/ui/Navbar/TopBar';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import PostHogProvider from '@/components/PostHogProvider';
 
 import './globals.css';
 
@@ -38,12 +39,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* We pass the promise here and resolve it with react.use in the child to prevent the async request from blocking the UI */}
-          <NavBar session={getSession()} />
-          <main>{children}</main>
-          <Toaster />
-          {modal}
-          <Footer />
+          <PostHogProvider>
+            {/* We pass the promise here and resolve it with react.use in the child to prevent the async request from blocking the UI */}
+            <NavBar session={getSession()} />
+            <main>{children}</main>
+            <Toaster />
+            {modal}
+            <Footer />
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

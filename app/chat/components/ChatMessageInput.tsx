@@ -4,6 +4,7 @@ import { useChat, type Message } from '@ai-sdk/react';
 import { useRouter } from 'next/navigation';
 import { useSWRConfig } from 'swr';
 import { useUpload } from '../context/uploadContext';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { toast } from 'sonner';
 // Shadcn UI components
 import { Button } from '@/components/ui/button';
@@ -109,11 +110,29 @@ const FilePreview = React.memo(
 // Add display name for debugging
 FilePreview.displayName = 'FilePreview';
 
-const modelTypes = [
-  { value: 'standart', label: 'Standard' },
-  { value: 'perplex', label: 'Perplexity' },
-  { value: 'website', label: 'Website' }
-];
+// Get model types based on PostHog feature flags
+const getModelTypes = (flags: any) => {
+  const types = [];
+  
+  if (flags.standardSearch) {
+    types.push({ value: 'standart', label: 'Standard' });
+  }
+  if (flags.perplexitySearch) {
+    types.push({ value: 'perplex', label: 'Perplexity' });
+  }
+  if (flags.websiteSearch) {
+    types.push({ value: 'website', label: 'Website' });
+  }
+  if (flags.arabicLegalSearch) {
+    types.push({ value: 'arabic-legal', label: 'Arabic Legal' });
+  }
+  
+  // Return types if any are enabled, otherwise default
+  return types.length > 0 ? types : [
+    { value: 'standart', label: 'Standard' },
+    { value: 'perplex', label: 'Perplexity' }
+  ];
+};
 
 const MessageInput = ({
   chatId,
@@ -141,6 +160,7 @@ const MessageInput = ({
   const { mutate } = useSWRConfig();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const featureFlags = useFeatureFlags();
 
   const { input, handleInputChange, handleSubmit, status, stop } = useChat({
     id: 'chat', // Use the same ID to share state
@@ -263,7 +283,7 @@ const MessageInput = ({
         {/* Bottom controls row with buttons */}
         <div className="flex px-2.5 pb-1 pt-1.5 items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
-            {attachedFiles.length === 0 && (
+            {attachedFiles.length === 0 && featureFlags.documentUpload && (
               <Button
                 type="button"
                 variant="outline"
@@ -283,7 +303,7 @@ const MessageInput = ({
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
                 <SelectContent>
-                  {modelTypes.map((model) => (
+                  {getModelTypes(featureFlags).map((model) => (
                     <SelectItem
                       key={model.value}
                       value={model.value}

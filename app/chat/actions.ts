@@ -3,7 +3,6 @@
 import { getSession } from '@/lib/server/supabase';
 import { z } from 'zod';
 import { createServerSupabaseClient } from '@/lib/server/server';
-import { createAdminClient } from '@/lib/server/admin';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { decodeBase64 } from './utils/base64';
@@ -194,8 +193,8 @@ export async function updateChatTitle(formData: FormData) {
     throw new Error('User not authenticated');
   }
 
-  const supabaseAdmin = createAdminClient();
-  const { error: updateError } = await supabaseAdmin
+  const supabase = await createServerSupabaseClient();
+  const { error: updateError } = await supabase
     .from('chat_sessions')
     .update({ chat_title: title })
     .eq('id', chatId)

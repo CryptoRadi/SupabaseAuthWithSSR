@@ -10,7 +10,6 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { redis } from '@/lib/server/server';
 import { getSession } from '@/lib/server/supabase';
 import { searchUserDocument } from './tools/documentChat';
-import { websiteSearchTool } from './tools/WebsiteSearchTool';
 import { google } from '@ai-sdk/google';
 import type { LanguageModelV1ProviderMetadata } from '@ai-sdk/provider';
 
@@ -162,13 +161,12 @@ export async function POST(req: NextRequest) {
       searchUserDocument: searchUserDocument({
         userId,
         selectedBlobs: selectedFiles
-      }),
-      websiteSearchTool: websiteSearchTool
+      })
     },
     experimental_activeTools:
       selectedFiles.length > 0
-        ? ['searchUserDocument', 'websiteSearchTool']
-        : ['websiteSearchTool'],
+        ? ['searchUserDocument']
+        : [],
     maxSteps: 3,
     experimental_telemetry: {
       isEnabled: true,

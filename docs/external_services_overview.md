@@ -10,8 +10,7 @@ This document provides a comprehensive overview of all external services used in
    - [Upstash Redis](#2-upstash-redis---rate-limiting--caching)
 3. [AI & Processing Services](#ai--processing-services)
    - [LlamaCloud](#3-llamacloud---pdf-processing)
-   - [Tavily AI](#4-tavily-ai---web-search)
-   - [Voyage AI](#5-voyage-ai---embeddings)
+   - [Voyage AI](#4-voyage-ai---embeddings)
 4. [LLM Providers](#llm-providers)
    - [OpenAI](#6-openai---gpt-models)
    - [Anthropic](#7-anthropic---claude)
@@ -30,7 +29,6 @@ This document provides a comprehensive overview of all external services used in
 | **Supabase** | Auth & Database | 500MB DB, 1GB storage | $25/mo | ✅ Essential |
 | **Upstash Redis** | Rate Limiting | 10K commands/day | $0.2/100K | ✅ Essential |
 | **LlamaCloud** | PDF Processing | 10K credits/mo | $50/mo | ✅ Essential |
-| **Tavily AI** | Web Search | 1000 searches/mo | $0.01/search | ⚡ Optional |
 | **Voyage AI** | Embeddings | Limited | Pay-per-use | ✅ Essential |
 | **OpenAI** | GPT Models | None | Pay-per-use | ⚡ Optional |
 | **Anthropic** | Claude | None | Pay-per-use | ⚡ Optional |
@@ -140,50 +138,7 @@ const markdownResponse = await fetch(
 
 ---
 
-### 4. Tavily AI - Web Search
-
-**Purpose**: Provides real-time web search capabilities within chat conversations.
-
-**What it does**:
-- 🔍 **Web Search**: Advanced search with multiple query variations
-- 📰 **Fresh Content**: Real-time information from the internet
-- 🎯 **Relevance Ranking**: AI-powered result scoring
-- 📝 **Content Extraction**: Clean text from web pages
-
-**Implementation**:
-```typescript
-// Tavily search configuration
-const body = {
-  api_key: process.env.TAVILY_API_KEY,
-  search_depth: 'advanced',
-  include_raw_content: true,
-  max_results: 2,
-  query: optimizedQuery
-};
-
-// Execute search
-const response = await fetch('https://api.tavily.com/search', {
-  method: 'POST',
-  body: JSON.stringify(body)
-});
-```
-
-**Features**:
-- **Query Optimization**: Generates 3 variations per search
-  - Comprehensive/broad search
-  - Recent developments (time-sensitive)
-  - Practical examples/guides
-- **Result Processing**: Deduplicates and formats results
-- **Source Integration**: Inline citations in responses
-
-**Cost Considerations**:
-- Free tier: 1,000 API requests/month
-- Basic plan ($20/mo): 40,000 requests
-- **Usage pattern**: 3 API calls per user search (3 query variations)
-
----
-
-### 5. Voyage AI - Embeddings
+### 4. Voyage AI - Embeddings
 
 **Purpose**: Generates high-quality vector embeddings for semantic search.
 
@@ -216,7 +171,7 @@ const { embedding } = await embed({
 
 ## LLM Providers
 
-### 6. OpenAI - GPT Models
+### 5. OpenAI - GPT Models
 
 **Available Models**:
 - `gpt-4.1-2025-04-14`: Latest GPT-4.1
@@ -227,7 +182,7 @@ const { embedding } = await embed({
 
 ---
 
-### 7. Anthropic - Claude
+### 6. Anthropic - Claude
 
 **Available Models**:
 - `claude-3-7-sonnet-20250219`: Latest Claude with thinking capability
@@ -243,14 +198,13 @@ providerOptions.anthropic = {
 
 ---
 
-### 8. Google AI - Gemini
+### 7. Google AI - Gemini
 
 **Available Models**:
 - `gemini-2.5-pro-preview-03-25`: Advanced model
 - `gemini-2.5-flash-preview-04-17`: Fast, efficient model
 
 **Used For**:
-- Query optimization in Tavily searches (free tier usage)
 - Chat conversations (optional)
 
 **Cost**: Generous free tier, then pay-per-use
@@ -259,7 +213,7 @@ providerOptions.anthropic = {
 
 ## Monitoring & Analytics
 
-### 9. Langfuse - LLM Observability
+### 8. Langfuse - LLM Observability
 
 **Purpose**: Monitors and analyzes AI chat interactions.
 
@@ -303,7 +257,6 @@ experimental_telemetry: {
 - **Limitations**: 
   - 10-20 PDF uploads/day
   - 30 chats/user/day
-  - 30 web searches/day
   - Basic monitoring
 
 ### Typical Small Project (Mixed)
@@ -314,10 +267,9 @@ experimental_telemetry: {
 ### Production Scale
 - **Supabase Pro**: $25/mo
 - **LlamaCloud Pro**: $50/mo
-- **Tavily Basic**: $20/mo
 - **Langfuse Team**: $49/mo
 - **LLM costs**: Variable ($50-200/mo)
-- **Total**: ~$200-400/mo
+- **Total**: ~$175-375/mo
 
 ---
 
@@ -336,17 +288,15 @@ graph TD
     
     B --> I[Chat Interface]
     I --> J[LLM Providers]
-    I --> K[Tavily Search]
-    I --> L[Document Search]
-    L --> H
+    I --> K[Document Search]
+    K --> H
     
-    J --> M[Langfuse]
+    J --> L[Langfuse]
     
     style C fill:#f9f,stroke:#333,stroke-width:2px
     style D fill:#f9f,stroke:#333,stroke-width:2px
     style F fill:#9ff,stroke:#333,stroke-width:2px
-    style K fill:#ff9,stroke:#333,stroke-width:2px
-    style M fill:#9f9,stroke:#333,stroke-width:2px
+    style L fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
 ### Critical Path Services
@@ -356,9 +306,8 @@ graph TD
 4. **Voyage AI**: Embeddings (enables search)
 
 ### Optional Enhancements
-1. **Tavily**: Web search (adds value but not essential)
-2. **Multiple LLMs**: Choice is good but one is enough
-3. **Langfuse**: Monitoring (highly recommended but not blocking)
+1. **Multiple LLMs**: Choice is good but one is enough
+2. **Langfuse**: Monitoring (highly recommended but not blocking)
 
 ---
 
@@ -374,6 +323,5 @@ graph TD
    - Voyage AI (embeddings)
 
 3. **Third** (Enhanced experience):
-   - Tavily (web search)
    - Additional LLM providers
    - Langfuse (monitoring) 
