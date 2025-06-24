@@ -39,7 +39,6 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
   );
 
   const navigationItems = [
-    { href: '/protected', text: 'Protected' },
     { href: '/chat', text: 'AI Chat' }
   ];
 
@@ -84,16 +83,6 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/protected"
-                      className="w-full cursor-pointer"
-                      prefetch={false}
-                      onMouseEnter={() => router.prefetch('/protected')}
-                    >
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem>
                     <SignOut />
                   </DropdownMenuItem>
