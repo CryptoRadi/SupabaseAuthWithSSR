@@ -33,24 +33,31 @@ This document outlines a phased implementation plan for building a comprehensive
 
 #### 0.1 UX Analysis & Design
 **Inspiration: Lovguiden.dk approach**
-- ✅ Main page (`/`) becomes chat interface directly
-- ✅ No separate landing page - users see the app immediately  
-- ✅ Login integrated into chat sidebar
-- ✅ Guest users can see interface but must login to chat
+- ✅ Main page (`/`) becomes limited chat interface for demos/trials
+- ✅ Keep `/chat` as full authenticated experience
+- ✅ Top navigation with "Product" menu (4 options including AI-assistant → `/chat`)
+- ✅ Guest users can try limited functions and see examples
+- ✅ Login integrated into sidebar for upgrade to full features
 
 **Key Design Elements from Lovguiden.dk:**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ [☰] Lovguiden.ai    [Search Bar]    [Login] [☀️]      │
+│ [☰] Lovguiden.ai  [Produkter ▼] [Om Lovguiden] [Login] │
+│                   ┌─────────────────┐                   │
+│                   │ • Ny Lovgivning │                   │
+│                   │ • Lovsamling    │                   │
+│                   │ • Domme & Afgør │                   │
+│                   │ • AI-assistent  │ ← Goes to /chat   │
+│                   └─────────────────┘                   │
 ├─────────────────────────────────────────────────────────┤
 │ ┌─────────────────┐ ┌─────────────────────────────────┐ │
 │ │ + Start ny chat │ │                                 │ │
-│ │ ═══════════════ │ │   Main Chat Interface          │ │
-│ │ Chat History:   │ │                                 │ │
-│ │ • Chat 1        │ │   "Få svar på baggrund af..."  │ │
-│ │ • Chat 2        │ │                                 │ │
-│ │ ─────────────── │ │   [Input Field with options]   │ │
-│ │ [🔑 Log ind]    │ │                                 │ │
+│ │ ═══════════════ │ │   Limited Chat Interface       │ │
+│ │ Example Chats:  │ │   (Guest/Trial Mode)            │ │
+│ │ • Sample 1      │ │                                 │ │
+│ │ • Sample 2      │ │   "Try limited features..."     │ │
+│ │ ─────────────── │ │                                 │ │
+│ │ [🔑 Log ind]    │ │   [Limited Input + Examples]    │ │
 │ │ [Opret konto]   │ │                                 │ │
 │ └─────────────────┘ └─────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
@@ -58,26 +65,24 @@ This document outlines a phased implementation plan for building a comprehensive
 
 #### 0.2 Implementation Plan
 
-**Step 1: Modify Root Route (`/`)**
+**Step 1: Modify Root Route (`/`) - Limited Trial Interface**
 ```typescript
-// app/page.tsx - Transform from landing to chat
+// app/page.tsx - Limited chat interface for trials
 export default async function HomePage() {
   const session = await getSession();
   
-  if (session) {
-    // Redirect authenticated users to chat
-    redirect('/chat');
-  }
+  // Don't redirect authenticated users - let them use trial mode too
+  // They can click "AI-assistent" in Product menu to go to full /chat
   
-  // Show chat interface for guests with login prompts
-  return <GuestChatInterface />;
+  // Show limited chat interface for everyone
+  return <TrialChatInterface session={session} />;
 }
 ```
 
-**Step 2: Create Guest Chat Interface**
+**Step 2: Create Trial Chat Interface**
 ```typescript
-// app/components/GuestChatInterface.tsx
-export default function GuestChatInterface() {
+// app/components/TrialChatInterface.tsx
+export default function TrialChatInterface({ session }: { session: User | null }) {
   return (
     <div className="flex h-screen">
       {/* Left Sidebar - Enhanced with Login */}
@@ -87,28 +92,46 @@ export default function GuestChatInterface() {
             + Start new chat
           </button>
           
-          {/* Login Section - Top of Sidebar */}
-          <div className="mb-6 p-3 bg-white rounded-lg border">
-            <h3 className="font-semibold mb-2">Get Started</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Login to start chatting with Arabic legal documents
-            </p>
-            <Link href="/signin" className="block w-full btn-primary mb-2">
-              🔑 Log in
-            </Link>
-            <Link href="/signup" className="block w-full btn-outline">
-              Create Account
-            </Link>
-          </div>
+          {/* Login/Upgrade Section - Top of Sidebar */}
+          {!session ? (
+            <div className="mb-6 p-3 bg-white rounded-lg border">
+              <h3 className="font-semibold mb-2">Get Started</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Login for full features and unlimited chats
+              </p>
+              <Link href="/signin" className="block w-full btn-primary mb-2">
+                🔑 Log in
+              </Link>
+              <Link href="/signup" className="block w-full btn-outline">
+                Create Account
+              </Link>
+            </div>
+          ) : (
+            <div className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="font-semibold mb-2">Upgrade to Full Version</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                You're in trial mode. Access full features in AI-assistant
+              </p>
+              <Link href="/chat" className="block w-full btn-primary">
+                Go to Full Chat →
+              </Link>
+            </div>
+          )}
           
-          {/* Sample Chat History (Static/Demo) */}
+          {/* Sample/Example Chats */}
           <div className="space-y-2">
-            <div className="text-sm font-medium text-gray-500">Recent Chats</div>
+            <div className="text-sm font-medium text-gray-500">
+              {session ? 'Trial Examples' : 'Example Chats'}
+            </div>
             <div className="space-y-1">
               {sampleChats.map((chat, i) => (
-                <div key={i} className="p-2 rounded bg-gray-100 opacity-50">
+                <div 
+                  key={i} 
+                  className="p-2 rounded bg-gray-100 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => handleExampleClick(chat)}
+                >
                   <div className="text-sm truncate">{chat.title}</div>
-                  <div className="text-xs text-gray-500">{chat.date}</div>
+                  <div className="text-xs text-gray-500">Try this example</div>
                 </div>
               ))}
             </div>
@@ -133,19 +156,29 @@ export default function GuestChatInterface() {
 }
 ```
 
-**Step 3: Guest Chat Main Area**
+**Step 3: Trial Chat Main Area**
 ```typescript
-// app/components/GuestChatMain.tsx
-export default function GuestChatMain() {
+// app/components/TrialChatMain.tsx
+export default function TrialChatMain({ session }: { session: User | null }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <div className="max-w-2xl text-center">
         <h1 className="text-4xl font-bold mb-4">
           Arabic Legal Research Assistant
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
+        <p className="text-xl text-gray-600 mb-4">
           Get answers based on Saudi judicial decisions, laws, and regulations
         </p>
+        {!session && (
+          <p className="text-lg text-blue-600 mb-8">
+            Try our limited demo below, or <Link href="/signin" className="underline">sign in</Link> for full access
+          </p>
+        )}
+        {session && (
+          <p className="text-lg text-blue-600 mb-8">
+            Trial mode - <Link href="/chat" className="underline font-semibold">Go to full AI-assistant →</Link>
+          </p>
+        )}
         
         {/* Sample Questions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -157,30 +190,45 @@ export default function GuestChatMain() {
           ))}
         </div>
         
-        {/* Input Area (Disabled for Guests) */}
+        {/* Input Area (Redirects to /chat like Lovguiden.dk) */}
         <div className="relative">
-          <div className="flex items-center space-x-2 p-4 border rounded-lg bg-gray-50">
-            <input 
-              type="text" 
-              placeholder="Ask about Saudi legal matters..."
-              className="flex-1 bg-transparent outline-none"
-              disabled
-            />
-            <button className="btn-primary" disabled>
-              Send
-            </button>
-          </div>
-          
-          {/* Login Overlay */}
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-            <div className="text-center">
-              <div className="text-sm font-medium mb-2">Login Required</div>
-              <Link href="/signin" className="btn-primary btn-sm">
-                Sign In to Chat
-              </Link>
+          <form onSubmit={handleTrialSubmit}>
+            <div className="flex items-center space-x-2 p-4 border rounded-lg">
+              <input 
+                type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ask about Saudi legal matters..."
+                className="flex-1 outline-none"
+                required
+              />
+              <button type="submit" className="btn-primary">
+                Ask Question →
+              </button>
             </div>
+          </form>
+          
+          {/* Smart Behavior Notice */}
+          <div className="mt-2 text-center text-sm text-gray-500">
+            {session ? (
+              <>Will redirect to full AI Assistant with your question</>
+            ) : (
+              <>Will take you to chat interface - sign in there for full features</>
+            )}
           </div>
         </div>
+
+        {/* handleTrialSubmit function */}
+        ```typescript
+        const handleTrialSubmit = (e: FormEvent) => {
+          e.preventDefault();
+          if (!query.trim()) return;
+          
+          // Redirect to /chat with the query (like Lovguiden.dk)
+          const params = new URLSearchParams({ q: query });
+          router.push(`/chat?${params.toString()}`);
+        };
+        ```
       </div>
     </div>
   );
@@ -198,31 +246,75 @@ export default function GuestChatMain() {
 
 #### 0.4 Update Navigation & Routing
 ```typescript
-// Update navigation logic
+// Update navigation logic - Add Product dropdown menu
 const navigation = [
-  { name: 'Chat', href: '/' },        // Main app
+  { 
+    name: 'Product', 
+    type: 'dropdown',
+    items: [
+      { name: 'Legal Documents', href: '/documents' },     // Future: Phase 5
+      { name: 'Law Collection', href: '/laws' },           // Future: Phase 5  
+      { name: 'Decisions & Rulings', href: '/decisions' }, // Future: Phase 4
+      { name: 'AI Assistant', href: '/chat' },             // Current: Full chat
+    ]
+  },
   { name: 'About', href: '/about' },  // Moved landing content
   { name: 'Sign In', href: '/signin' },
 ];
 
 // Update middleware for new flow
 if (currentRoute === '/' && !session) {
-  // Allow access to guest chat interface
+  // Allow access to trial chat interface
   // Don't redirect to signin
+}
+
+// Smart /chat handling - allow guests with queries, but show upgrade prompts
+if (currentRoute.startsWith('/chat') && !session) {
+  const url = new URL(request.url);
+  const hasQuery = url.searchParams.has('q');
+  
+  if (hasQuery) {
+    // Allow guest access when they have a query (from main page)
+    // /chat will show the query result + prominent login prompts
+    return response;
+  } else {
+    // Direct /chat access without query requires login
+    const redirectUrl = new URL(request.url);
+    redirectUrl.pathname = '/signin';
+    return NextResponse.redirect(redirectUrl);
+  }
 }
 ```
 
 #### 0.5 Implementation Tasks
-- [ ] Create `GuestChatInterface` component
-- [ ] Create `GuestChatMain` component  
-- [ ] Update root route (`/`) logic
-- [ ] Add sample questions/chats data
-- [ ] Style login sections in sidebar
-- [ ] Test guest vs authenticated flows
-- [ ] Update navigation components
+
+**Main Page (/) - Trial Interface:**
+- [ ] Create `TrialChatInterface` component
+- [ ] Create `TrialChatMain` component  
+- [ ] Update root route (`/`) logic for trial mode
+- [ ] Add sample questions/chats data with click handlers
+- [ ] Style login/upgrade sections in sidebar
+- [ ] Implement query redirect to `/chat?q=query`
+
+**Chat Page (/chat) - Smart Guest Handling:**
+- [ ] Modify `/chat` to accept guests with queries (`?q=query`)
+- [ ] Show guest banner: "Sign in for unlimited chats, history, and advanced features"
+- [ ] Allow 1 guest query, then require login for more
+- [ ] Pre-populate chat input with query from URL parameter
+- [ ] Add prominent "Sign In" and "Sign Up" buttons in sidebar for guests
+
+**Navigation & Routing:**
+- [ ] Add Product dropdown menu to navigation
+- [ ] Create placeholder routes for future features (/documents, /laws, /decisions)
+- [ ] Update middleware for smart `/chat` guest access
 - [ ] Move current landing to `/about`
-- [ ] Update middleware routing logic
 - [ ] Test modal routes with new flow
+
+**Testing:**
+- [ ] Test guest flow: Main page → type query → redirects to /chat → shows result → prompts login
+- [ ] Test authenticated flow: Main page → type query → redirects to /chat → full experience
+- [ ] Test direct /chat access (should require login)
+- [ ] Test /chat?q=something access (should allow guests)
 
 #### 0.6 Benefits of This Approach
 ✅ **Immediate Value**: Users see the app instantly
@@ -284,6 +376,7 @@ graph LR
 - [ ] Integrate Qdrant search results
 - [ ] Handle RTL text display
 - [ ] Add Arabic-specific formatting
+- [ ] **Integrate Q&A functionality** (see Q&A Integration section below)
 
 #### 2.4 Replace Website Search with Arabic Legal Search
 *Note: Website search has been disabled in the UI and will be replaced*
@@ -322,6 +415,134 @@ POST /api/arabic-legal-search
 - Rate limiting implementation
 - Chat history saving with sources
 - UI components for source display
+
+---
+
+### **Phase 2.5: Q&A Integration** (1-2 weeks) 🤖
+*Goal: Leverage generated Q&A pairs for enhanced user experience*
+
+The Arabic legal pipeline generates 3 Q&A pairs per decision by default. These can be integrated into the web application in multiple valuable ways:
+
+#### 2.5.1 Query Suggestion System
+```typescript
+// Real-time query suggestions based on Q&A pairs
+export function useQuerySuggestions(inputValue: string) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  useEffect(() => {
+    if (inputValue.length > 10) {
+      fetch('/api/qa-suggestions', {
+        method: 'POST',
+        body: JSON.stringify({ query: inputValue })
+      })
+      .then(res => res.json())
+      .then(setSuggestions);
+    }
+  }, [inputValue]);
+  
+  return suggestions;
+}
+```
+
+**Implementation Tasks:**
+- [ ] Create `/api/qa-suggestions` endpoint
+- [ ] Implement semantic search over Q&A questions
+- [ ] Add suggestion dropdown to chat input
+- [ ] Style suggestions with difficulty/type badges
+
+#### 2.5.2 Enhanced Search Results with Q&A Context
+```typescript
+// Show related Q&A pairs alongside search results
+interface SearchResultWithQA {
+  content: string;
+  metadata: any;
+  score: number;
+  relatedQA: {
+    question: string;
+    answer: string;
+    difficulty: 'basic' | 'intermediate' | 'advanced';
+    type: 'factual' | 'procedural' | 'legal_principle' | 'case_specific';
+  }[];
+}
+```
+
+**Implementation Tasks:**
+- [ ] Modify search API to include Q&A pairs
+- [ ] Create expandable Q&A sections in results
+- [ ] Add difficulty/type filtering for Q&A
+- [ ] Implement Q&A embedding search
+
+#### 2.5.3 Q&A Prompt Quality Assessment
+```typescript
+// The Q&A quality depends on the prompt in legal_qa_generator.py
+// Current prompt may need optimization for practical query suggestions:
+
+// Current approach focuses on educational Q&A types:
+// - factual, procedural, legal_principle, case_specific
+
+// For better query suggestions, consider prompts that generate:
+// - Natural user queries (كيف، متى، ماذا، لماذا)
+// - Practical legal questions lawyers would ask
+// - Comparative questions between similar cases
+// - Application-focused questions about the decision
+```
+
+**Implementation Tasks:**
+- [ ] Analyze current Q&A quality from generated pairs
+- [ ] Test different prompt variations for query relevance
+- [ ] A/B test query suggestions with users
+- [ ] Fine-tune prompts based on user feedback
+- [ ] Consider prompt variants for different use cases
+
+#### 2.5.4 Chat Context Enhancement
+**Use Q&A pairs to provide richer context in chat responses:**
+- [ ] Search relevant Q&A pairs for user queries
+- [ ] Include Q&A context in LLM prompts
+- [ ] Show "Related Questions" section in chat
+- [ ] Allow users to click Q&A to explore further
+
+#### 2.5.5 Database Schema for Q&A
+```sql
+-- Store Q&A pairs with searchable embeddings
+CREATE TABLE legal_qa_pairs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    decision_id UUID REFERENCES arabic_decisions(id),
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    difficulty TEXT CHECK (difficulty IN ('basic', 'intermediate', 'advanced')),
+    type TEXT CHECK (type IN ('factual', 'procedural', 'legal_principle', 'case_specific')),
+    question_embedding vector(1024), -- BGE-M3 embeddings
+    answer_embedding vector(1024),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Indexes for efficient Q&A search
+CREATE INDEX idx_qa_difficulty ON legal_qa_pairs(difficulty);
+CREATE INDEX idx_qa_type ON legal_qa_pairs(type);
+CREATE INDEX idx_qa_question_embedding ON legal_qa_pairs 
+USING ivfflat (question_embedding vector_cosine_ops);
+```
+
+#### 2.5.6 Q&A API Endpoints
+- [ ] `POST /api/qa-suggestions` - Get query suggestions
+- [ ] `POST /api/qa-context` - Get Q&A for chat context
+- [ ] `POST /api/qa-search` - Search Q&A pairs
+- [ ] `POST /api/qa-feedback` - Collect user feedback on Q&A quality
+
+#### 2.5.7 UI Components
+- [ ] `QuerySuggestions` - Dropdown with suggested questions
+- [ ] `QASection` - Expandable Q&A in search results
+- [ ] `RelatedQuestions` - Q&A recommendations in chat
+- [ ] `QAFeedback` - Component for collecting Q&A quality feedback
+
+**Expected Benefits:**
+- 🚀 **Better Discovery**: Users find relevant questions they didn't think to ask
+- 🎯 **Improved Accuracy**: Q&A context helps LLM provide better answers
+- 💡 **Enhanced Search**: Related Q&A pairs provide additional context
+- 🔍 **Smart Suggestions**: AI-generated questions guide user queries
+
+**⚠️ Important Note:**
+Q&A quality depends heavily on the prompt in `legal_qa_generator.py`. The current prompt may need optimization for practical query suggestions vs. educational content. Consider testing and iterating on prompts based on user feedback.
 
 ---
 
@@ -530,11 +751,12 @@ async def update_legal_database():
 | Phase 0 | 1-2 weeks | Chat-first landing page |
 | Phase 1 | 1-2 weeks | Fixed current system |
 | Phase 2 | 2-3 weeks | Basic integration working |
+| Phase 2.5 | 1-2 weeks | **Q&A integration & learning features** |
 | Phase 3 | 3-4 weeks | Relational database ready |
 | Phase 4 | 2-3 weeks | Cross-reference search |
 | Phase 5 | 4-6 weeks | Laws integrated |
 | Phase 6 | 4-5 weeks | Automation running |
-| **Total** | **17-25 weeks** | **Full system** |
+| **Total** | **18-27 weeks** | **Full system** |
 
 ---
 
