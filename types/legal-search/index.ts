@@ -27,7 +27,7 @@ export interface SearchResult {
   quality_score: number;
   entities: Record<string, unknown>;
   court_type: number;
-  collection_city: string;
+  city: string;
   case_number: string;
   // AI-generated display fields
   ai_descriptive_title: string;
