@@ -9,8 +9,8 @@ import { Linkedin, Youtube } from 'lucide-react';
 const Footer: React.FC = () => {
   const pathname = usePathname();
 
-  // If the current pathname is '/chat'  do not render the component
-  if (pathname === '/chat' || /^\/chat\/[^/]+$/.test(pathname)) {
+  // Hide footer on search pages (full-height layout)
+  if (pathname.startsWith('/search')) {
     return null;
   }
 

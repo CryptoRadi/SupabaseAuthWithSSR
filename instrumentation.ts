@@ -3,7 +3,7 @@ import { LangfuseExporter } from 'langfuse-vercel';
 
 export function register() {
   registerOTel({
-    serviceName: 'langfuse-vercel-ai-lovguiden',
+    serviceName: 'saudi-legal-search',
     traceExporter: new LangfuseExporter()
   });
 }
