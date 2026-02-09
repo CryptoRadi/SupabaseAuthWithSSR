@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
 
   // Handle route-specific redirects
   const currentRoute = request.nextUrl.pathname;
-  if ((currentRoute.startsWith('/search') || currentRoute.startsWith('/chat')) && !session) {
+  if (currentRoute.startsWith('/search') && !session) {
     const redirectUrl = new URL(request.url);
     redirectUrl.pathname = '/signin';
     return NextResponse.redirect(redirectUrl);
